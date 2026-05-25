@@ -1,0 +1,22 @@
+site:
+  title: "Paper Radar"
+  subtitle: "Daily notes on Remote Sensing and Agent papers"
+  author: "Wenzhe Liu"
+  description: "每日一篇遥感与大模型智能体方向高水平论文摘要。"
+  base_url: "https://rrryan2016.github.io"
+  language: "zh-CN"
+  timezone: "Asia/Shanghai"
+  github_url: "https://github.com/rrryan2016/rrryan2016.github.io"
+
+paper_bot:
+  topics:
+    - name: "Remote Sensing"
+      query: 'cat:cs.CV AND (abs:"remote sensing" OR ti:"remote sensing" OR abs:"earth observation" OR ti:"earth observation")'
+    - name: "Agent"
+      query: 'cat:cs.AI AND (abs:"large language model" OR ti:"agent" OR abs:"agent")'
+  max_candidates: 20
+  base_url: "https://api.ikuncode.cc/v1"
+  api_key_env: "OPENAI_API_KEY"
+  model: "gpt-5.2"
+  language: "zh-CN"
+  min_title_words: 4
