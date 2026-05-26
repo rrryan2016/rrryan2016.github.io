@@ -8,10 +8,13 @@ import datetime as dt
 import json
 import os
 import re
+import socket
 import sys
 import textwrap
+import time
 import urllib.parse
 import urllib.request
+import urllib.error
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
@@ -71,7 +74,7 @@ def existing_arxiv_ids() -> set[str]:
     return ids
 
 
-def fetch_arxiv(query: str, max_results: int) -> list[dict[str, Any]]:
+def fetch_arxiv(query: str, max_results: int, retries: int = 4) -> list[dict[str, Any]]:
     params = {
         "search_query": query,
         "start": "0",
@@ -81,8 +84,29 @@ def fetch_arxiv(query: str, max_results: int) -> list[dict[str, Any]]:
     }
     url = f"{ARXIV_API}?{urllib.parse.urlencode(params)}"
     request = urllib.request.Request(url, headers={"User-Agent": "PaperRadar/1.0"})
-    with urllib.request.urlopen(request, timeout=30) as response:
-        payload = response.read()
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                payload = response.read()
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {429, 500, 502, 503, 504} or attempt >= retries:
+                raise
+            retry_after = exc.headers.get("Retry-After")
+            if retry_after and retry_after.isdigit():
+                delay = int(retry_after)
+            else:
+                delay = 15 * (attempt + 1)
+            print(f"arXiv API returned HTTP {exc.code}. Retrying in {delay}s...", file=sys.stderr)
+            time.sleep(delay)
+        except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
+            if attempt >= retries:
+                raise
+            delay = 15 * (attempt + 1)
+            print(f"arXiv API request failed: {exc}. Retrying in {delay}s...", file=sys.stderr)
+            time.sleep(delay)
+    else:
+        raise RuntimeError("Failed to fetch arXiv results.")
 
     root = ET.fromstring(payload)
     ns = {
@@ -178,6 +202,8 @@ def choose_paper(config: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         query = str(topic.get("query", "")).strip()
         if not query:
             continue
+        if candidates:
+            time.sleep(3)
         for paper in fetch_arxiv(query, max_candidates):
             if paper["arxiv_id"] in seen:
                 continue

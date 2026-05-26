@@ -2,8 +2,8 @@ name: Generate daily paper
 
 on:
   schedule:
-    # GitHub cron uses UTC. This runs at 08:20 Asia/Shanghai.
-    - cron: "20 0 * * *"
+    # GitHub cron uses UTC. This runs at 09:37 Asia/Shanghai.
+    - cron: "37 1 * * *"
   workflow_dispatch:
 
 permissions:
