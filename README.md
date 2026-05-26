@@ -120,7 +120,109 @@ paper_bot:
    注意：`.env` 和 `site/` 已经在 `.gitignore` 中，不会被提交。API key 应只放在 `.env` 或 GitHub Actions secrets 中。
 3. 在 `Settings -> Pages -> Build and deployment` 中选择 `GitHub Actions`。
 4. 推送后 `Build and deploy site` workflow 会生成并部署 `site/`。
+<!-- 
+   这个 workflow 来自 `.github/workflows/pages.yml`。它会在你向 `main` 分支 push 时自动运行，也可以在 GitHub 网页上手动运行。
+
+   自动运行流程：
+
+   ```bash
+   git add .
+   git commit -m "Update site"
+   git push origin main
+   ```
+
+   推送后到仓库页面查看：
+
+   1. 打开 GitHub 仓库。
+   2. 进入 `Actions` 标签页。
+   3. 点击 `Build and deploy site`。
+   4. 等待 `build` 和 `deploy` 两个 job 都变成绿色。
+
+   它实际做的事情是：
+
+   1. Checkout 仓库代码。
+   2. 安装 Python 3.12。
+   3. 运行 `python scripts/build_site.py`。
+   4. 把生成出来的 `site/` 作为 Pages artifact 上传。
+   5. 使用 `actions/deploy-pages` 发布到 GitHub Pages。
+
+   部署成功后，在 workflow 的 `deploy` job 里可以看到页面地址。用户站点通常是：
+
+   ```text
+   https://<your-user>.github.io/
+   ```
+
+   普通项目站点通常是：
+
+   ```text
+   https://<your-user>.github.io/<your-repo>/
+   ```
+
+   如果 workflow 没有自动运行，检查：
+
+   - 仓库 `Settings -> Pages -> Build and deployment -> Source` 是否选择了 `GitHub Actions`。
+   - `.github/workflows/pages.yml` 是否已经提交到 `main`。
+   - `Actions` 页面是否提示需要手动启用 workflow。
+   - `Settings -> Actions -> General -> Workflow permissions` 是否允许 GitHub Actions 运行。 -->
+
 5. `Generate daily paper` workflow 默认每天 UTC 00:20 运行，即北京时间 08:20。
+<!-- 
+   这个 workflow 来自 `.github/workflows/daily-paper.yml`。它有两种触发方式：定时自动运行和手动运行。
+
+   定时运行配置如下：
+
+   ```yaml
+   schedule:
+     - cron: "20 0 * * *"
+   ```
+
+   GitHub Actions 的 cron 时间使用 UTC，所以 `20 0 * * *` 表示每天 UTC 00:20。北京时间是 UTC+8，因此对应每天 08:20。
+
+   手动运行方式：
+
+   1. 打开 GitHub 仓库。
+   2. 进入 `Actions` 标签页。
+   3. 点击左侧的 `Generate daily paper`。
+   4. 点击右侧 `Run workflow`。
+   5. 分支选择 `main`。
+   6. 再点击绿色的 `Run workflow`。
+
+   首次运行前，需要在 `Settings -> Secrets and variables -> Actions -> Repository secrets` 中添加：
+
+   ```text
+   OPENAI_API_KEY
+   OPENAI_BASE_URL
+   OPENAI_MODEL
+   ```
+
+   其中 `OPENAI_API_KEY` 是必须项。`OPENAI_BASE_URL` 和 `OPENAI_MODEL` 如果不填，会使用代码或 `config.yaml` 中的默认值。当前 workflow 会把这些 secrets 注入给脚本：
+
+   ```yaml
+   env:
+     TZ: Asia/Shanghai
+     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+     OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+     OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+   ```
+
+   它实际做的事情是：
+
+   1. Checkout 仓库代码。
+   2. 安装 Python 3.12。
+   3. 运行 `python scripts/generate_daily_paper.py`，从 arXiv 选择一篇新论文并生成 Markdown。
+   4. 运行 `python scripts/build_site.py`，确认新文章能正常构建。
+   5. 如果 `content/posts/` 有新增文章，就提交并 push 回 `main`。
+   6. 这次 push 会再次触发 `Build and deploy site`，从而发布新文章。
+
+   如果没有配置大模型 key，脚本会生成 fallback 摘要，不会中断整个流程。fallback 文章会保留论文标题、作者、arXiv 链接和原始摘要，后续可以手动编辑。
+
+   如果 `Generate daily paper` 运行失败，优先检查：
+
+   - `Actions` 日志里是否是 arXiv 网络访问失败。
+   - `OPENAI_API_KEY` 是否填写到了 `Repository secrets`，不是 `Variables`。
+   - `OPENAI_BASE_URL` 是否是 OpenAI 兼容接口，例如 `https://api.openai.com/v1`。
+   - `OPENAI_MODEL` 是否是你的接口实际支持的模型名。
+   - 仓库 `Settings -> Actions -> General -> Workflow permissions` 是否选择 `Read and write permissions`，否则 workflow 可能无法把新文章 push 回 `main`。 -->
 
 ## 内容结构
 
