@@ -166,6 +166,11 @@ def paper_score(paper: dict[str, Any], topic_name: str) -> int:
             "geospatial",
             "foundation model",
             "multimodal",
+            "change detection",
+            "change caption",
+            "change description",
+            "vision-language",
+            "visual language",
         ],
         "Agent": [
             "agent",
@@ -176,6 +181,8 @@ def paper_score(paper: dict[str, Any], topic_name: str) -> int:
             "llm",
             "reasoning",
             "workflow",
+            "vision-language",
+            "multimodal",
         ],
     }
     for keyword in keywords.get(topic_name, []):
@@ -226,15 +233,34 @@ def llm_summary(topic: str, paper: dict[str, Any], config: dict[str, Any]) -> st
 
     bot = config.get("paper_bot", {})
     language = str(bot.get("language", "zh-CN"))
+    research_context = str(
+        bot.get(
+            "research_context",
+            "我关注遥感图像变化检测、变化描述、遥感 VLM 和面向科研流程的 Agent。",
+        )
+    )
+    application_focus = bot.get("application_focus", [])
+    if isinstance(application_focus, list):
+        application_focus_text = "\n".join(f"- {item}" for item in application_focus)
+    else:
+        application_focus_text = f"- {application_focus}"
     endpoint = f"{base_url}/chat/completions"
     prompt = f"""请用{language}写一篇博客式论文摘要，读者是遥感、机器学习和大模型智能体方向的研究者。
 
 要求：
 - 标题不要重复论文标题，正文直接从“## 论文速览”开始。
 - 使用 Markdown。
-- 包含这些二级标题：论文速览、方法要点、实验与结果、为什么值得关注、局限与开放问题。
+- 包含这些二级标题，且顺序保持一致：论文速览、方法要点、实验与结果、为什么值得关注、对我的研究启发、可实践方案、局限与开放问题。
 - 不要编造摘要中没有的信息；如果实验细节不足，明确说明 arXiv 摘要未提供。
 - 保持专业、克制、信息密度高。
+- “对我的研究启发”必须结合下方研究背景，说明这篇论文对遥感变化检测/变化描述/VLM/Agent 工作可能有什么启发；如果论文主题较远，也要明确指出迁移价值有限在哪里。
+- “可实践方案”必须给出 3-5 条可以落地到科研中的做法，尽量写成可执行实验设计，例如数据、模型、训练/推理流程、评测指标、消融或 Agent 工作流；不能只写泛泛建议。
+
+我的研究背景：
+{research_context}
+
+我希望优先关联这些方向：
+{application_focus_text}
 
 主题：{topic}
 论文标题：{paper['title']}
@@ -292,6 +318,17 @@ def fallback_summary(topic: str, paper: dict[str, Any]) -> str:
 ## 阅读提示
 
 建议重点检查论文是否提供了新的任务设定、数据集、模型结构、评测协议或 Agent 工作流设计。如果它只提出概念性框架，需要进一步阅读正文确认实验强度和可复现性。
+
+## 对我的研究启发
+
+由于当前文章是 fallback 摘要，还没有调用大模型进行个性化分析。建议人工阅读时重点判断它是否能迁移到遥感变化检测、变化描述、遥感 VLM 或 Agent 科研流程中，例如是否能改进双时相特征对齐、变化区域解释、跨模态指令数据构造、工具调用式误差分析或自动实验编排。
+
+## 可实践方案
+
+- 将论文中的核心建模思路映射到双时相遥感输入，设计一个最小可行 baseline。
+- 检查是否能构造变化检测/变化描述指令数据，用于 VLM 微调或评测。
+- 设计一组消融实验，比较原始方法、遥感适配版本和现有变化检测模型。
+- 如果论文涉及 Agent，将其拆解为数据检索、模型推理、结果评估、错误归因等可调用工具链。
 """
 
 

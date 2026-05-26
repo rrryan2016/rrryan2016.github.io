@@ -67,6 +67,17 @@ OPENAI_MODEL=gpt-4.1-mini
 - `paper_bot.base_url`：OpenAI 兼容接口地址，例如 `https://api.openai.com/v1`。
 - `paper_bot.api_key_env`：读取 API key 的环境变量名，默认 `OPENAI_API_KEY`。
 - `paper_bot.model`：默认摘要模型。
+- `paper_bot.research_context`：你的长期研究背景，会注入每日摘要 prompt。
+- `paper_bot.application_focus`：希望每日文章重点关联的科研方向，例如变化检测、变化描述、VLM 和 Agent。
+
+当前自动选题是轻量筛选，不等同于严格的“顶会/高引用”筛选。脚本会：
+
+- 从 `paper_bot.topics` 中配置的 arXiv 检索式拉取候选论文。
+- 跳过已经发布过的 arXiv ID。
+- 根据关键词、标题命中、arXiv 类别和是否为 survey 做简单打分。
+- 选择得分最高且较新的候选。
+
+如果希望进一步提高来源质量，可以收紧检索式，或在 `scripts/generate_daily_paper.py` 的 `paper_score` 中加入更强的规则，例如优先 `cs.CV/cs.AI/cs.CL`、优先 benchmark/foundation model/VLM/change detection，降低 survey 或纯应用论文权重。
 
 arXiv 检索式示例：
 

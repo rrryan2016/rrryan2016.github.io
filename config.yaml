@@ -20,3 +20,10 @@ paper_bot:
   model: "gpt-5.2"
   language: "zh-CN"
   min_title_words: 4
+  research_context: "我关注遥感图像变化检测、变化描述、遥感视觉语言模型 VLM，以及面向遥感解译流程的 Agent。"
+  application_focus:
+    - "双时相/多时相遥感图像变化检测"
+    - "变化区域定位、类别识别与变化原因解释"
+    - "变化描述 caption 与面向用户的报告生成"
+    - "VLM 在遥感图像理解、跨模态对齐、指令跟随中的应用"
+    - "Agent 用于数据筛选、实验编排、工具调用、误差分析和论文复现实验"
