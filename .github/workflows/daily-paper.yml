@@ -2,8 +2,10 @@ name: Generate daily paper
 
 on:
   schedule:
-    # GitHub cron uses UTC. This runs at 09:37 Asia/Shanghai.
+    # GitHub cron uses UTC. These fallback runs reduce missed schedule risk.
     - cron: "37 1 * * *"
+    - cron: "17 3 * * *"
+    - cron: "47 6 * * *"
   workflow_dispatch:
 
 permissions:

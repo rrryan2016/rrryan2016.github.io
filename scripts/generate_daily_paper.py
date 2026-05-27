@@ -74,6 +74,17 @@ def existing_arxiv_ids() -> set[str]:
     return ids
 
 
+def has_post_for_date(post_date: dt.date) -> bool:
+    date_text = post_date.isoformat()
+    for path in POSTS_DIR.glob("*.md"):
+        if path.name.startswith(date_text):
+            return True
+        text = path.read_text(encoding="utf-8")
+        if re.search(rf"(?m)^date:\s*['\"]?{re.escape(date_text)}['\"]?\s*$", text):
+            return True
+    return False
+
+
 def fetch_arxiv(query: str, max_results: int, retries: int = 4) -> list[dict[str, Any]]:
     params = {
         "search_query": query,
@@ -379,10 +390,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a daily paper summary post.")
     parser.add_argument("--date", help="Post date in YYYY-MM-DD. Defaults to today.")
     parser.add_argument("--dry-run", action="store_true", help="Print the selected paper without writing a post.")
+    parser.add_argument("--force", action="store_true", help="Generate even if a post already exists for the date.")
     args = parser.parse_args()
 
     config = read_simple_yaml(CONFIG_PATH)
     post_date = dt.date.fromisoformat(args.date) if args.date else today_local()
+    if has_post_for_date(post_date) and not args.force:
+        print(f"Post for {post_date.isoformat()} already exists; skipping.")
+        return
+
     topic, paper = choose_paper(config)
 
     if args.dry_run:

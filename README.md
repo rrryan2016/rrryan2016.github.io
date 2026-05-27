@@ -176,7 +176,7 @@ paper_bot:
    - `Actions` 页面是否提示需要手动启用 workflow。
    - `Settings -> Actions -> General -> Workflow permissions` 是否允许 GitHub Actions 运行。 -->
 
-5. `Generate daily paper` workflow 默认每天 UTC 00:20 运行，即北京时间 08:20。
+5. `Generate daily paper` workflow 默认每天多次错峰检查，成功生成当天文章后，后续同日运行会自动跳过。
 <!-- 
    这个 workflow 来自 `.github/workflows/daily-paper.yml`。它有两种触发方式：定时自动运行和手动运行。
 
@@ -184,10 +184,12 @@ paper_bot:
 
    ```yaml
    schedule:
-     - cron: "20 0 * * *"
+     - cron: "37 1 * * *"
+     - cron: "17 3 * * *"
+     - cron: "47 6 * * *"
    ```
 
-   GitHub Actions 的 cron 时间使用 UTC，所以 `20 0 * * *` 表示每天 UTC 00:20。北京时间是 UTC+8，因此对应每天 08:20。
+   GitHub Actions 的 cron 时间使用 UTC。上面三次分别对应北京时间 09:37、11:17、14:47。多次错峰是为了降低 GitHub schedule 延迟或漏触发的影响；脚本会检测当天是否已经有文章，如果已经存在，就输出 `Post for YYYY-MM-DD already exists; skipping.` 并正常结束。
 
    手动运行方式：
 
